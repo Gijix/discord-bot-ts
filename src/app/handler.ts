@@ -14,6 +14,7 @@ export class Handler {
   constructor(private path: string) {}
 
   async load(client: core.FullClient) {
+    console.log(this.path)
     const filenames = await fs.readdir(this.path)
     const filepathList: string[] = []
     for (const filename of filenames) {
@@ -21,7 +22,7 @@ export class Handler {
       filepathList.push(filepath)
       await this.emit("load", filepath, client)
     }
-    await this.emit("finish", filepathList, client)
+    await this.emit('finish', filepathList, client)
   }
 
   on<EventName extends keyof HandlerEvents>(

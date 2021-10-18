@@ -11,7 +11,7 @@ export const tableHandler = new handler.Handler(
 )
 
 tableHandler.once("finish", async (pathList) => {
-  const tables = await Promise.all(
+  const tables : Table<any>[] = await Promise.all(
     pathList.map(async (filepath) => {
       const tableFile = await import("file://" + filepath)
       return tableFile.default
