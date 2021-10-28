@@ -1,4 +1,4 @@
-import customClient from './app/client.js'
+import discord from "discord.js"
 import type { FullClient } from "./app.js"
 
 import "dotenv/config"
@@ -9,7 +9,13 @@ for (const key of ["BOT_TOKEN", "BOT_PREFIX", "BOT_OWNER"]) {
   }
 }
 
-const client = customClient
+const client = new discord.Client({
+  intents: process.env.BOT_INTENTS
+    ? process.env.BOT_INTENTS.split(/[;|.,\s+]+/).map(
+        (intent) => discord.Intents.FLAGS[intent as discord.IntentsString]
+      )
+    : [],
+})
 
 ;(async () => {
   const app = await import("./app.js")
@@ -28,5 +34,6 @@ const client = customClient
     }
   } catch (error: any) {
     app.error(error, "index", true)
+    process.exit(1)
   }
 })()
