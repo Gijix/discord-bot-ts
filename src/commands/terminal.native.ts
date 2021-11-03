@@ -16,7 +16,6 @@ export default new app.Command({
   },
   async run(message) {
     message.triggerCoolDown()
-
     const toEdit = await message.channel.send({
       embeds: [
         new app.MessageEmbed()
