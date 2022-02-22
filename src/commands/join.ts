@@ -7,6 +7,6 @@ export default new app.Command({
   description: "The join command",
   channelType: "all",
   async run(message) {
-    client.join(message)
+    // client.join(message)
   }
 })

@@ -10,13 +10,15 @@ const listener: app.Listener<"messageCreate"> = {
     const prefix = await app.prefix(message.guild ?? undefined)
 
     if (new RegExp(`^<@!?${message.client.user.id}>$`).test(message.content))
-      return message.channel.send({
-        embeds: [
-          new app.MessageEmbed()
-            .setColor("BLURPLE")
-            .setDescription(`My prefix is \`${prefix}\``),
-        ],
-      })
+      return message.channel
+        .send({
+          embeds: [
+            new app.SafeMessageEmbed()
+              .setColor()
+              .setDescription(`My prefix is \`${prefix}\``),
+          ],
+        })
+        .catch()
 
     message.usedAsDefault = false
 
@@ -144,7 +146,7 @@ const listener: app.Listener<"messageCreate"> = {
     })
 
     if (typeof prepared !== "boolean")
-      return message.channel.send({ embeds: [prepared] })
+      return message.channel.send({ embeds: [prepared] }).catch()
 
     if (!prepared) return
 
@@ -162,7 +164,7 @@ const listener: app.Listener<"messageCreate"> = {
           })
         )
         .catch((error) => {
-          app.error(error, "messageCreate.native")
+          app.error(error, "messageCreate.native", true)
         })
     }
   },

@@ -7,5 +7,5 @@ export default new app.Command({
   description: "The leave command",
   channelType: "all",
   async run(message) {
-    client.leave(message)
+    // client.leave(message)
 }})

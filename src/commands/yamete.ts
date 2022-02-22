@@ -3,6 +3,7 @@ import client from "../app/client.js"
 import {AudioPlayerStatus} from "@discordjs/voice"
 
 export default new app.Command({
+  isSlash: true,
   botOwnerOnly:true,
   name: "yamete",
   description: "The yamete command",
