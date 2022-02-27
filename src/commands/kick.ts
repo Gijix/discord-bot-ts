@@ -4,7 +4,7 @@ export default new app.Command({
   name: "kick",
   description: "The kick command",
   channelType: "all",
-  userPermissions: ["MANAGE_MESSAGES"],
+  userPermissions: ["KICK_MEMBERS"],
   async run(message) {
     let member = message.mentions.members?.first()
     return member?.kick()
