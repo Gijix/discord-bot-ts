@@ -1,4 +1,4 @@
-import { Message, ChannelLogsQueryOptions, TextChannel, Channel, PartialDMChannel } from "discord.js"
+import { Message, ChannelLogsQueryOptions, TextChannel } from "discord.js"
 import * as app from "../app.js"
 
 async function lots_of_messages_getter(channel: TextChannel, limit = 500) {
@@ -7,11 +7,13 @@ async function lots_of_messages_getter(channel: TextChannel, limit = 500) {
 
   while (true) {
       const options: ChannelLogsQueryOptions = { limit: 100 };
+
       if (last_id) {
           options.before = last_id;
       }
 
       const messages = await channel.messages.fetch(options);
+
       sum_messages.push(...messages.values());
       last_id = messages.last()?.id
 
@@ -23,25 +25,14 @@ async function lots_of_messages_getter(channel: TextChannel, limit = 500) {
   return sum_messages;
 }
 
-function validateText (channel: Channel | PartialDMChannel): channel is TextChannel {
-  if(channel.type === "GUILD_TEXT") {
-    return true
-  }
-
-  return false
-}
-
 export default new app.Command({
   userPermissions: ["MANAGE_MESSAGES"],
   name: "clear",
   description: "The clear command",
-  channelType: "all",
+  channelType: "guild",
   async run(message) {
-    if(!validateText(message.channel)) {
-      return
-    }
     const member = message.mentions.members?.first()
-    const messages = (await lots_of_messages_getter(message.channel)).filter(msg => {
+    let messages = (await lots_of_messages_getter(message.channel)).filter(msg => {
       if(member) {
         return msg.member?.id === member.id
       }
@@ -49,7 +40,18 @@ export default new app.Command({
       return true
     })
 
-    message.channel.bulkDelete(messages)
-    message.channel.send("successfuly clear " + messages.length + " messages")
+    while (messages.length) {
+      if(messages.length > 100) {
+        let nextMessage = messages.slice(101)
+        const deletedNumber = (await message.channel.bulkDelete(messages.slice(0,100))).size
+        await message.channel.send("successfuly clear " + deletedNumber + " messages")
+        messages = nextMessage
+        continue
+      }
+      await message.channel.bulkDelete(messages)
+      message.channel.send("successfuly clear " + messages.length + " messages")
+      break
+    }
+    
   },
 })
