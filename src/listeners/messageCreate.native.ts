@@ -1,5 +1,8 @@
 import * as app from "../app.js"
 import yargsParser from "yargs-parser"
+import { filename } from "dirname-filename-esm"
+
+const __filename = filename(import.meta)
 
 const listener: app.Listener<"messageCreate"> = {
   event: "messageCreate",
@@ -44,7 +47,8 @@ const listener: app.Listener<"messageCreate"> = {
       return m
     }.bind(message)
 
-    message.isFromBotOwner = message.author.id === process.env.BOT_OWNER
+    message.isFromBotOwner =
+      message.author.id === (await app.getBotOwnerId(message))
 
     app.emitMessage(message.channel, message)
     app.emitMessage(message.author, message)
@@ -125,9 +129,9 @@ const listener: app.Listener<"messageCreate"> = {
 
     // parse CommandMessage arguments
     const parsedArgs = yargsParser(dynamicContent)
-    const restPositional = parsedArgs._.slice() ?? []
+    const restPositional = (parsedArgs._?.slice() ?? []).map(String)
 
-    message.args = (parsedArgs._?.slice(0) ?? []).map((positional) => {
+    message.args = restPositional.map((positional) => {
       if (/^(?:".+"|'.+')$/.test(positional))
         return positional.slice(1, positional.length - 1)
       return positional
@@ -153,7 +157,7 @@ const listener: app.Listener<"messageCreate"> = {
     try {
       await cmd.options.run.bind(cmd)(message)
     } catch (error: any) {
-      app.error(error, "messageCreate.native", true)
+      app.error(error, cmd.filepath ?? __filename, true)
       message.channel
         .send(
           app.code.stringify({
@@ -164,7 +168,7 @@ const listener: app.Listener<"messageCreate"> = {
           })
         )
         .catch((error) => {
-          app.error(error, "messageCreate.native", true)
+          app.error(error, cmd.filepath ?? __filename, true)
         })
     }
   },

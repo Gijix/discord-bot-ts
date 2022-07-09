@@ -2,6 +2,10 @@ import discord from "discord.js"
 
 import * as logger from "./logger.js"
 
+import { filename } from "dirname-filename-esm"
+
+const __filename = filename(import.meta)
+
 export type PaginatorKey = "previous" | "next" | "start" | "end"
 
 /** As Snowflakes or icons */
@@ -14,7 +18,7 @@ export interface PaginatorOptions {
   useReactions?: boolean
   useButtonLabels?: boolean
   buttonStyle?: discord.MessageButtonStyleResolvable
-  channel: discord.TextBasedChannels
+  channel: discord.TextBasedChannel
   filter?: (
     reaction: discord.MessageReaction | discord.PartialMessageReaction,
     user: discord.User | discord.PartialUser
@@ -77,14 +81,12 @@ export abstract class Paginator {
           for (const key of Paginator.keys)
             await message.react(this.emojis[key])
       })
-      .catch((error) =>
-        logger.error(error, "pagination:Paginator:constructor", true)
-      )
+      .catch((error) => logger.error(error, __filename, true))
 
     Paginator.instances.push(this)
   }
 
-  protected async getComponents() {
+  protected async getComponents(disabled?: boolean) {
     const pageCount = await this.getPageCount()
 
     return (this.options.useReactions ?? Paginator.defaults.useReactions) ||
@@ -113,7 +115,8 @@ export abstract class Paginator {
               else button.setEmoji(this.emojis[key])
 
               button.setDisabled(
-                (key === "start" && this._pageIndex === 0) ||
+                disabled ||
+                  (key === "start" && this._pageIndex === 0) ||
                   (key === "end" && this._pageIndex === pageCount - 1)
               )
 
@@ -143,9 +146,7 @@ export abstract class Paginator {
 
     await interaction
       .update(await this.formatPage(await this.getCurrentPage()))
-      .catch((error) =>
-        logger.error(error, "pagination:Paginator:handleInteraction", true)
-      )
+      .catch((error) => logger.error(error, __filename, true))
   }
 
   public async handleReaction(
@@ -173,9 +174,7 @@ export abstract class Paginator {
         await this.options.channel.messages.cache
           .get(this._messageID)
           ?.edit(await this.formatPage(await this.getCurrentPage()))
-          .catch((error) =>
-            logger.error(error, "pagination:Paginator:handleReaction", true)
-          )
+          .catch((error: any) => logger.error(error, __filename, true))
     }
   }
 
@@ -234,10 +233,16 @@ export abstract class Paginator {
     )
 
     // if message is not deleted
-    if (message && !message.deleted)
+    if (message && !message.deletable)
       if (this.options.useReactions ?? Paginator.defaults.useReactions)
         await message.reactions?.removeAll().catch()
-      else await message.delete()
+      else {
+        // await this._interaction?.editReply(
+        //   await this.formatPage(
+        //     await this.getCurrentPage()
+        //   )
+        // )
+      }
 
     Paginator.instances = Paginator.instances.filter(
       (paginator) => paginator._messageID !== this._messageID
